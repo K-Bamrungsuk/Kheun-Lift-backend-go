@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"kheun-Lift-backend-go/internal/exercises"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -54,6 +56,8 @@ func run() error {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
 	})
+
+	router.Get("/exercises", exercises.NewHandler(pool))
 
 	server := &http.Server{
 		Addr:              ":" + port,
