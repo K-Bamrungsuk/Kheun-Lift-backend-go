@@ -3,21 +3,13 @@ package exercises
 import (
 	"context"
 
+	"kheun-Lift-backend-go/internal/queries"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Exercise struct {
-	ID          int     `json:"id"`
-	Name        string  `json:"name"`
-	Description *string `json:"description"`
-}
-
 func list(ctx context.Context, pool *pgxpool.Pool) ([]Exercise, error) {
-	rows, err := pool.Query(ctx, `
-		SELECT "id", "name", "description"
-		FROM "Exercise"
-		ORDER BY "id" ASC
-	`)
+	rows, err := pool.Query(ctx, queries.ListExercises)
 	if err != nil {
 		return nil, err
 	}

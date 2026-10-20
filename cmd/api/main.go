@@ -8,7 +8,10 @@ import (
 	"os"
 	"time"
 
+	authhandler "kheun-Lift-backend-go/internal/auth/handler"
 	"kheun-Lift-backend-go/internal/exercises"
+	appmiddleware "kheun-Lift-backend-go/internal/middleware"
+	userhandler "kheun-Lift-backend-go/internal/user/handler"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -57,7 +60,24 @@ func run() error {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	router.Post("/auth/register", authhandler.NewRegisterHandler(pool))
+	router.Post("/auth/login", authhandler.NewLoginHandler(
+		pool,
+		os.Getenv("COOKIE_SECURE") != "false",
+	))
 	router.Get("/exercises", exercises.NewHandler(pool))
+
+	router.Group(func(protected chi.Router) {
+		protected.Use(http.NewCrossOriginProtection().Handler)
+		protected.Use(appmiddleware.RequireSession(pool))
+
+		protected.Get("/users/me", userhandler.GetMe)
+		protected.Patch("/users/me", userhandler.NewPatchMeHandler(pool))
+		protected.Post("/auth/logout", authhandler.NewLogoutHandler(
+			pool,
+			os.Getenv("COOKIE_SECURE") != "false",
+		))
+	})
 
 	server := &http.Server{
 		Addr:              ":" + port,
