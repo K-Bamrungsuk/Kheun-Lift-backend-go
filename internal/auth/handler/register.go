@@ -13,6 +13,7 @@ import (
 	"kheun-Lift-backend-go/internal/auth/model"
 	"kheun-Lift-backend-go/internal/auth/service"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -39,22 +40,22 @@ func validateRegister(input model.RegisterInput) string {
 	return ""
 }
 
-func NewRegisterHandler(pool *pgxpool.Pool) http.HandlerFunc {
+func NewRegisterHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	hashSlots := make(chan struct{}, 2)
 
-	return func(w http.ResponseWriter, r *http.Request) {
-		r.Body = http.MaxBytesReader(w, r.Body, 16*1024)
-		decoder := json.NewDecoder(r.Body)
+	return func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 16*1024)
+		decoder := json.NewDecoder(c.Request.Body)
 
 		var input model.RegisterInput
 		if err := decoder.Decode(&input); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{
+			c.JSON(http.StatusBadRequest, map[string]string{
 				"message": "Invalid JSON or request body too large.",
 			})
 			return
 		}
 		if err := decoder.Decode(new(any)); err != io.EOF {
-			writeJSON(w, http.StatusBadRequest, map[string]string{
+			c.JSON(http.StatusBadRequest, map[string]string{
 				"message": "Request body must contain one JSON object.",
 			})
 			return
@@ -64,7 +65,7 @@ func NewRegisterHandler(pool *pgxpool.Pool) http.HandlerFunc {
 		input.Email = strings.TrimSpace(input.Email)
 
 		if message := validateRegister(input); message != "" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{
+			c.JSON(http.StatusBadRequest, map[string]string{
 				"message": message,
 			})
 			return
@@ -74,41 +75,32 @@ func NewRegisterHandler(pool *pgxpool.Pool) http.HandlerFunc {
 		case hashSlots <- struct{}{}:
 			defer func() { <-hashSlots }()
 		default:
-			writeJSON(w, http.StatusServiceUnavailable, map[string]string{
+			c.JSON(http.StatusServiceUnavailable, map[string]string{
 				"message": "Registration is busy. Please try again.",
 			})
 			return
 		}
 
-		user, err := service.RegisterUser(r.Context(), pool, input)
+		user, err := service.RegisterUser(c.Request.Context(), pool, input)
 		if err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-				writeJSON(w, http.StatusConflict, map[string]string{
+				c.JSON(http.StatusConflict, map[string]string{
 					"message": "Username or email is already registered.",
 				})
 				return
 			}
 
 			log.Print("Create user failed")
-			writeJSON(w, http.StatusInternalServerError, map[string]string{
+			c.JSON(http.StatusInternalServerError, map[string]string{
 				"message": "Unable to register.",
 			})
 			return
 		}
 
-		writeJSON(w, http.StatusCreated, map[string]any{
+		c.JSON(http.StatusCreated, map[string]any{
 			"message": "Registration successful! Ready to smash your PR?",
 			"user":    user,
 		})
-	}
-}
-
-func writeJSON(w http.ResponseWriter, status int, body any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-
-	if err := json.NewEncoder(w).Encode(body); err != nil {
-		log.Printf("Write auth response failed: %v", err)
 	}
 }

@@ -13,8 +13,7 @@ import (
 	appmiddleware "kheun-Lift-backend-go/internal/middleware"
 	userhandler "kheun-Lift-backend-go/internal/user/handler"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -26,11 +25,15 @@ func main() {
 
 func run() error {
 	databaseURL := os.Getenv("DATABASE_URL")
+
 	if databaseURL == "" {
 		return errors.New("DATABASE_URL is required")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
 	defer cancel()
 
 	pool, err := pgxpool.New(ctx, databaseURL)
@@ -51,33 +54,40 @@ func run() error {
 		port = "3001"
 	}
 
-	router := chi.NewRouter()
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
+	router := gin.Default()
+	router.HandleMethodNotAllowed = true
+	router.RedirectTrailingSlash = false
+	router.SetTrustedProxies(nil)
 
-	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"ok"}`))
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	router.Post("/auth/register", authhandler.NewRegisterHandler(pool))
-	router.Post("/auth/login", authhandler.NewLoginHandler(
+	router.POST("/auth/register", authhandler.NewRegisterHandler(pool))
+	router.POST("/auth/login", authhandler.NewLoginHandler(
 		pool,
 		os.Getenv("COOKIE_SECURE") != "false",
 	))
-	router.Get("/exercises", exercises.NewHandler(pool))
+	router.GET("/exercises", exercises.NewHandler(pool))
 
-	router.Group(func(protected chi.Router) {
-		protected.Use(http.NewCrossOriginProtection().Handler)
-		protected.Use(appmiddleware.RequireSession(pool))
+	crossOrigin := http.NewCrossOriginProtection()
+	protected := router.Group("")
+	protected.Use(func(c *gin.Context) {
+		if err := crossOrigin.Check(c.Request); err != nil {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"message": "Cross-origin request blocked.",
+			})
+			return
+		}
+		c.Next()
+	}, appmiddleware.RequireSession(pool))
 
-		protected.Get("/users/me", userhandler.GetMe)
-		protected.Patch("/users/me", userhandler.NewPatchMeHandler(pool))
-		protected.Post("/auth/logout", authhandler.NewLogoutHandler(
-			pool,
-			os.Getenv("COOKIE_SECURE") != "false",
-		))
-	})
+	protected.GET("/users/me", userhandler.GetMe)
+	protected.PATCH("/users/me", userhandler.NewPatchMeHandler(pool))
+	protected.POST("/auth/logout", authhandler.NewLogoutHandler(
+		pool,
+		os.Getenv("COOKIE_SECURE") != "false",
+	))
 
 	server := &http.Server{
 		Addr:              ":" + port,

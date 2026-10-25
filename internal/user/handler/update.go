@@ -15,6 +15,7 @@ import (
 	"kheun-Lift-backend-go/internal/user/model"
 	"kheun-Lift-backend-go/internal/user/service"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -99,49 +100,49 @@ func decodeUpdateUser(body io.Reader) (model.UpdateUserInput, error) {
 	return input, nil
 }
 
-func NewPatchMeHandler(pool *pgxpool.Pool) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		session, ok := middleware.SessionFromContext(r.Context())
+func NewPatchMeHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session, ok := middleware.SessionFromContext(c.Request.Context())
 		if !ok {
-			writeJSON(w, http.StatusUnauthorized, map[string]string{
+			c.JSON(http.StatusUnauthorized, map[string]string{
 				"message": "Please login.",
 			})
 			return
 		}
 
-		r.Body = http.MaxBytesReader(w, r.Body, 16*1024)
-		input, err := decodeUpdateUser(r.Body)
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 16*1024)
+		input, err := decodeUpdateUser(c.Request.Body)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{
+			c.JSON(http.StatusBadRequest, map[string]string{
 				"message": err.Error(),
 			})
 			return
 		}
 
-		user, err := service.UpdateUser(r.Context(), pool, session.User.ID, input)
+		user, err := service.UpdateUser(c.Request.Context(), pool, session.User.ID, input)
 		if err != nil {
 			var pgErr *pgconn.PgError
 			switch {
 			case errors.As(err, &pgErr) &&
 				pgErr.Code == "23505" &&
 				pgErr.ConstraintName == "User_username_key":
-				writeJSON(w, http.StatusConflict, map[string]string{
+				c.JSON(http.StatusConflict, map[string]string{
 					"message": "Username is already registered.",
 				})
 			case errors.Is(err, pgx.ErrNoRows):
-				writeJSON(w, http.StatusUnauthorized, map[string]string{
+				c.JSON(http.StatusUnauthorized, map[string]string{
 					"message": "Session is invalid. Please login.",
 				})
 			default:
 				log.Print("Update user failed")
-				writeJSON(w, http.StatusInternalServerError, map[string]string{
+				c.JSON(http.StatusInternalServerError, map[string]string{
 					"message": "Unable to update user.",
 				})
 			}
 			return
 		}
 
-		writeJSON(w, http.StatusOK, map[string]any{
+		c.JSON(http.StatusOK, map[string]any{
 			"user": user,
 		})
 	}

@@ -11,34 +11,32 @@ import (
 	"kheun-Lift-backend-go/internal/auth/model"
 	"kheun-Lift-backend-go/internal/auth/service"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewLoginHandler(
-	pool *pgxpool.Pool,
-	secureCookie bool,
-) http.HandlerFunc {
+func NewLoginHandler(pool *pgxpool.Pool, secureCookie bool) gin.HandlerFunc {
 	hashSlots := make(chan struct{}, 2)
 
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "no-store")
+	return func(c *gin.Context) {
+		c.Header("Cache-Control", "no-store")
 
 		fail := func(status int, message string) {
-			writeJSON(w, status, map[string]string{
+			c.JSON(status, map[string]string{
 				"message": message,
 			})
 		}
 
 		contentType, _, err := mime.ParseMediaType(
-			r.Header.Get("Content-Type"),
+			c.GetHeader("Content-Type"),
 		)
 		if err != nil || contentType != "application/json" {
 			fail(http.StatusUnsupportedMediaType, "Use application/json.")
 			return
 		}
 
-		r.Body = http.MaxBytesReader(w, r.Body, 16*1024)
-		decoder := json.NewDecoder(r.Body)
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 16*1024)
+		decoder := json.NewDecoder(c.Request.Body)
 
 		var input model.LoginInput
 		if err := decoder.Decode(&input); err != nil {
@@ -65,7 +63,7 @@ func NewLoginHandler(
 			return
 		}
 
-		result, err := service.Login(r.Context(), pool, input)
+		result, err := service.Login(c.Request.Context(), pool, input)
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			fail(http.StatusUnauthorized, "Invalid email or password.")
 			return
@@ -76,7 +74,7 @@ func NewLoginHandler(
 			return
 		}
 
-		http.SetCookie(w, &http.Cookie{
+		http.SetCookie(c.Writer, &http.Cookie{
 			Name:     "kheun_session",
 			Value:    result.Token,
 			Path:     "/",
@@ -86,7 +84,7 @@ func NewLoginHandler(
 			MaxAge:   86400,
 			Expires:  result.ExpiresAt,
 		})
-		writeJSON(w, http.StatusOK, map[string]any{
+		c.JSON(http.StatusOK, map[string]any{
 			"message": "Welcome! Ready to update your PRs?",
 			"user":    result.User,
 		})
