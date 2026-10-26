@@ -63,8 +63,9 @@ func run() error {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	router.POST("/auth/register", authhandler.NewRegisterHandler(pool))
-	router.POST("/auth/login", authhandler.NewLoginHandler(
+	authRateLimit := appmiddleware.RateLimit()
+	router.POST("/auth/register", authRateLimit, authhandler.NewRegisterHandler(pool))
+	router.POST("/auth/login", authRateLimit, authhandler.NewLoginHandler(
 		pool,
 		os.Getenv("COOKIE_SECURE") != "false",
 	))
@@ -93,6 +94,9 @@ func run() error {
 		Addr:              ":" + port,
 		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	log.Printf("Server running on http://localhost:%s", port)
