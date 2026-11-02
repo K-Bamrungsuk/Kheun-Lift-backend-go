@@ -37,3 +37,15 @@ func list(ctx context.Context, pool *pgxpool.Pool) ([]Exercise, error) {
 
 	return exercises, nil
 }
+
+func getByID(ctx context.Context, pool *pgxpool.Pool, id int32) (Exercise, error) {
+	var exercise Exercise
+
+	err := pool.QueryRow(ctx, queries.GetExerciseByID, id).Scan(
+		&exercise.ID,
+		&exercise.Name,
+		&exercise.Description,
+	)
+
+	return exercise, err
+}

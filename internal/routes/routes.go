@@ -14,7 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Register(router *gin.Engine, pool *pgxpool.Pool) {
+func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
@@ -26,6 +26,7 @@ func Register(router *gin.Engine, pool *pgxpool.Pool) {
 		os.Getenv("COOKIE_SECURE") != "false",
 	))
 	router.GET("/exercises", exercises.NewHandler(pool))
+	router.GET("/exercises/:id", exercises.NewGetByIDHandler(pool))
 
 	crossOrigin := http.NewCrossOriginProtection()
 	protected := router.Group("")

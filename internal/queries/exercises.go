@@ -5,3 +5,9 @@ const ListExercises = `
 	FROM "Exercise"
 	ORDER BY "id" ASC
 `
+
+const GetExerciseByID = `
+	SELECT "id", "name", "description"
+	FROM "Exercise"
+	WHERE "id" = $1
+`

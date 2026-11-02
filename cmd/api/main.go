@@ -56,7 +56,7 @@ func run() error {
 	router.RedirectTrailingSlash = false
 	router.SetTrustedProxies(nil)
 
-	routes.Register(router, pool)
+	routes.Setup(router, pool)
 
 	server := &http.Server{
 		Addr:              ":" + port,
