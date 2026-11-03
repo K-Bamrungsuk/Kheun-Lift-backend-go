@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+func NewWeightClassHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		gender := c.Query("gender")
 		if gender != "male" && gender != "female" {

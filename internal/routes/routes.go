@@ -6,6 +6,7 @@ import (
 
 	authhandler "kheun-Lift-backend-go/internal/auth/handler"
 	"kheun-Lift-backend-go/internal/exercises"
+	"kheun-Lift-backend-go/internal/lifts"
 	appmiddleware "kheun-Lift-backend-go/internal/middleware"
 	userhandler "kheun-Lift-backend-go/internal/user/handler"
 	"kheun-Lift-backend-go/internal/weightclasses"
@@ -25,8 +26,8 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 		pool,
 		os.Getenv("COOKIE_SECURE") != "false",
 	))
-	router.GET("/exercises", exercises.NewHandler(pool))
-	router.GET("/exercises/:id", exercises.NewGetByIDHandler(pool))
+	router.GET("/exercises", exercises.NewExerciseHandler(pool))
+	router.GET("/exercises/:id", exercises.NewGetExerciseByIDHandler(pool))
 
 	crossOrigin := http.NewCrossOriginProtection()
 	protected := router.Group("")
@@ -41,8 +42,14 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 	}, appmiddleware.RequireSession(pool))
 
 	protected.GET("/users/me", userhandler.GetMe)
-	protected.GET("/weight-classes", weightclasses.NewHandler(pool))
+	protected.GET("/weight-classes", weightclasses.NewWeightClassHandler(pool))
 	protected.PATCH("/users/me", userhandler.NewPatchMeHandler(pool))
+	protected.POST("/lifts", lifts.NewCreateHandler(pool))
+	protected.GET("/lifts/me", lifts.NewListMineHandler(pool))
+	protected.GET("/lifts/users/:id", lifts.NewListByUserHandler(pool))
+	protected.GET("/lifts/:id", lifts.NewGetLiftByIDHandler(pool))
+	protected.PATCH("/lifts/:id", lifts.NewUpdateHandler(pool))
+	protected.DELETE("/lifts/:id", lifts.NewDeleteHandler(pool))
 	protected.POST("/auth/logout", authhandler.NewLogoutHandler(
 		pool,
 		os.Getenv("COOKIE_SECURE") != "false",

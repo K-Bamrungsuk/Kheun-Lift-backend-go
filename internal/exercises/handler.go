@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+func NewExerciseHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
@@ -34,7 +34,7 @@ func NewHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	}
 }
 
-func NewGetByIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+func NewGetExerciseByIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseInt(c.Param("id"), 10, 32)
 		if err != nil || id <= 0 {
