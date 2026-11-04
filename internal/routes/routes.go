@@ -6,6 +6,7 @@ import (
 
 	authhandler "kheun-Lift-backend-go/internal/auth/handler"
 	"kheun-Lift-backend-go/internal/exercises"
+	"kheun-Lift-backend-go/internal/leaderboards"
 	"kheun-Lift-backend-go/internal/lifts"
 	appmiddleware "kheun-Lift-backend-go/internal/middleware"
 	userhandler "kheun-Lift-backend-go/internal/user/handler"
@@ -28,6 +29,9 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 	))
 	router.GET("/exercises", exercises.NewExerciseHandler(pool))
 	router.GET("/exercises/:id", exercises.NewGetExerciseByIDHandler(pool))
+	router.GET("/leaderboards/exercises/:exerciseId", leaderboards.NewListHandler(pool))
+	router.GET("/leaderboards/exercises/:exerciseId/weight-classes/:weightClassId", leaderboards.NewListHandler(pool))
+	router.GET("/leaderboards/random", leaderboards.NewRandomHandler(pool))
 
 	crossOrigin := http.NewCrossOriginProtection()
 	protected := router.Group("")
