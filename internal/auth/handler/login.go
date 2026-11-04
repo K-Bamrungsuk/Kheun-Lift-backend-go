@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"io"
 	"mime"
 	"net/http"
 	"strings"
@@ -41,10 +40,6 @@ func NewLoginHandler(pool *pgxpool.Pool, secureCookie bool) gin.HandlerFunc {
 		var input model.LoginInput
 		if err := decoder.Decode(&input); err != nil {
 			fail(http.StatusBadRequest, "Invalid JSON or request body too large.")
-			return
-		}
-		if err := decoder.Decode(new(any)); err != io.EOF {
-			fail(http.StatusBadRequest, "Request body must contain one JSON object.")
 			return
 		}
 

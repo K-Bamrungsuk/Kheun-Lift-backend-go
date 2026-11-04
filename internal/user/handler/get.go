@@ -1,23 +1,42 @@
 package handler
 
 import (
+	"context"
+	"log"
 	"net/http"
+	"time"
 
+	authmodel "kheun-Lift-backend-go/internal/auth/model"
 	"kheun-Lift-backend-go/internal/middleware"
+	"kheun-Lift-backend-go/internal/weightclasses"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetMe(c *gin.Context) {
-	session, ok := middleware.SessionFromContext(c.Request.Context())
-	if !ok {
-		c.JSON(http.StatusUnauthorized, map[string]string{
-			"message": "Please login.",
-		})
-		return
-	}
+func NewGetMeHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session, ok := middleware.SessionFromContext(c.Request.Context())
+		if !ok {
+			c.JSON(http.StatusUnauthorized, map[string]string{
+				"message": "Please login.",
+			})
+			return
+		}
 
-	c.JSON(http.StatusOK, map[string]any{
-		"user": session.User,
-	})
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+		defer cancel()
+		weightClass, err := weightclasses.FindForUser(ctx, pool, session.User.Gender, session.User.BodyWeight)
+		if err != nil {
+			log.Printf("Find user weight class failed: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Unable to load profile."})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"user": struct {
+				authmodel.User
+				WeightClass *weightclasses.WeightClass `json:"weightClass"`
+			}{User: session.User, WeightClass: weightClass},
+		})
+	}
 }

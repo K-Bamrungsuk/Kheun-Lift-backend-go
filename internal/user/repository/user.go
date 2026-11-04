@@ -21,7 +21,7 @@ func UpdateUser(
 	err := pool.QueryRow(
 		ctx, queries.UpdateUser, userID,
 		input.Username, input.BodyWeight, input.Height,
-		input.Gender, input.DateOfBirth,
+		input.Gender, input.DateOfBirth, input.ProfileImage,
 	).Scan(
 		&user.ID,
 		&user.Username,

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"log"
 	"mime"
 	"net/http"
@@ -30,10 +29,6 @@ func decodeBody(c *gin.Context, input any) bool {
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON, unsupported fields or request body too large."})
-		return false
-	}
-	if err := decoder.Decode(new(any)); err != io.EOF {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Request body must contain one JSON object."})
 		return false
 	}
 	return true
@@ -137,10 +132,6 @@ func NewListByUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		records, err := listByUser(ctx, pool, int(id))
 		if err != nil {
 			respondError(c, err)
-			return
-		}
-		if len(records) == 0 {
-			respondError(c, pgx.ErrNoRows)
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "Get user all lift records successfully", "data": records})

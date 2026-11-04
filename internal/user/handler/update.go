@@ -29,9 +29,6 @@ func decodeUpdateUser(body io.Reader) (model.UpdateUserInput, error) {
 	if err := decoder.Decode(&fields); err != nil {
 		return input, errors.New("Invalid JSON or request body too large.")
 	}
-	if err := decoder.Decode(new(any)); err != io.EOF {
-		return input, errors.New("Request body must contain one JSON object.")
-	}
 	if len(fields) == 0 {
 		return input, errors.New("Provide at least one field to update.")
 	}
@@ -42,6 +39,8 @@ func decodeUpdateUser(body io.Reader) (model.UpdateUserInput, error) {
 		switch field {
 		case "username":
 			target = &input.Username
+		case "profileImage":
+			target = &input.ProfileImage
 		case "bodyWeight":
 			target = &input.BodyWeight
 		case "height":
@@ -62,22 +61,6 @@ func decodeUpdateUser(body io.Reader) (model.UpdateUserInput, error) {
 		}
 	}
 
-	if input.Username != nil {
-		*input.Username = strings.TrimSpace(*input.Username)
-		if n := utf8.RuneCountInString(*input.Username); n < 1 || n > 20 {
-			return input, errors.New("Username must be between 1 and 20 characters.")
-		}
-	}
-	if input.BodyWeight != nil && (*input.BodyWeight < 1 || *input.BodyWeight > 999) {
-		return input, errors.New("Body weight must be between 1 and 999.")
-	}
-	if input.Height != nil && (*input.Height < 1 || *input.Height > 999) {
-		return input, errors.New("Height must be between 1 and 999.")
-	}
-	if input.Gender != nil && *input.Gender != "male" && *input.Gender != "female" {
-		return input, errors.New("Gender must be male or female.")
-	}
-
 	if _, supplied := fields["dateOfBirth"]; supplied {
 		date, err := time.Parse(time.DateOnly, dateOfBirth)
 		if err != nil {
@@ -87,17 +70,38 @@ func decodeUpdateUser(body io.Reader) (model.UpdateUserInput, error) {
 			return input, errors.New("Date of birth must be YYYY-MM-DD or RFC3339.")
 		}
 
-		day := date.Format(time.DateOnly)
-		if day < "1900-01-01" || day > time.Now().Format(time.DateOnly) {
-			return input, errors.New("Date of birth must be between 1900-01-01 and today.")
-		}
-
 		// Birthdays retain the supplied calendar date regardless of timezone.
 		normalized := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
 		input.DateOfBirth = &normalized
 	}
 
 	return input, nil
+}
+
+func validateUpdateUser(input *model.UpdateUserInput) error {
+	if input.Username != nil {
+		*input.Username = strings.TrimSpace(*input.Username)
+		if n := utf8.RuneCountInString(*input.Username); n < 1 || n > 20 {
+			return errors.New("Username must be between 1 and 20 characters.")
+		}
+	}
+	if input.BodyWeight != nil && (*input.BodyWeight < 1 || *input.BodyWeight > 999) {
+		return errors.New("Body weight must be between 1 and 999.")
+	}
+	if input.Height != nil && (*input.Height < 1 || *input.Height > 999) {
+		return errors.New("Height must be between 1 and 999.")
+	}
+	if input.Gender != nil && *input.Gender != "male" && *input.Gender != "female" {
+		return errors.New("Gender must be male or female.")
+	}
+
+	if input.DateOfBirth != nil {
+		day := input.DateOfBirth.Format(time.DateOnly)
+		if day < "1900-01-01" || day > time.Now().Format(time.DateOnly) {
+			return errors.New("Date of birth must be between 1900-01-01 and today.")
+		}
+	}
+	return nil
 }
 
 func NewPatchMeHandler(pool *pgxpool.Pool) gin.HandlerFunc {
@@ -112,6 +116,9 @@ func NewPatchMeHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 16*1024)
 		input, err := decodeUpdateUser(c.Request.Body)
+		if err == nil {
+			err = validateUpdateUser(&input)
+		}
 		if err != nil {
 			c.JSON(http.StatusBadRequest, map[string]string{
 				"message": err.Error(),

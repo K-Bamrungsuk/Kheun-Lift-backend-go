@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"io"
 	"log"
 	"net/http"
 	"net/mail"
@@ -51,12 +50,6 @@ func NewRegisterHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		if err := decoder.Decode(&input); err != nil {
 			c.JSON(http.StatusBadRequest, map[string]string{
 				"message": "Invalid JSON or request body too large.",
-			})
-			return
-		}
-		if err := decoder.Decode(new(any)); err != io.EOF {
-			c.JSON(http.StatusBadRequest, map[string]string{
-				"message": "Request body must contain one JSON object.",
 			})
 			return
 		}

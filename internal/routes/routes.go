@@ -41,7 +41,7 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 		c.Next()
 	}, appmiddleware.RequireSession(pool))
 
-	protected.GET("/users/me", userhandler.GetMe)
+	protected.GET("/users/me", userhandler.NewGetMeHandler(pool))
 	protected.GET("/weight-classes", weightclasses.NewWeightClassHandler(pool))
 	protected.PATCH("/users/me", userhandler.NewPatchMeHandler(pool))
 	protected.POST("/lifts", lifts.NewCreateHandler(pool))

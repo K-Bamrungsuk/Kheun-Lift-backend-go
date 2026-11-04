@@ -8,6 +8,7 @@ const UpdateUser = `
 		"height" = COALESCE($4, "height"),
 		"gender" = COALESCE($5, "gender"),
 		"dateOfBirth" = COALESCE($6, "dateOfBirth"),
+		"profileImage" = COALESCE($7, "profileImage"),
 		"updatedAt" = CURRENT_TIMESTAMP
 	WHERE "id" = $1
 	RETURNING
