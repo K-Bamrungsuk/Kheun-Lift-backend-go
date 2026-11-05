@@ -1,4 +1,4 @@
-package weightclasses
+package model
 
 import "time"
 

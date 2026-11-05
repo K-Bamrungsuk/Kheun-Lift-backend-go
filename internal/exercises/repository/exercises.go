@@ -1,24 +1,25 @@
-package exercises
+package repository
 
 import (
 	"context"
 
+	"kheun-Lift-backend-go/internal/exercises/model"
 	"kheun-Lift-backend-go/internal/queries"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func list(ctx context.Context, pool *pgxpool.Pool) ([]Exercise, error) {
+func List(ctx context.Context, pool *pgxpool.Pool) ([]model.Exercise, error) {
 	rows, err := pool.Query(ctx, queries.ListExercises)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	exercises := make([]Exercise, 0)
+	exercises := make([]model.Exercise, 0)
 
 	for rows.Next() {
-		var exercise Exercise
+		var exercise model.Exercise
 
 		if err := rows.Scan(
 			&exercise.ID,
@@ -38,8 +39,8 @@ func list(ctx context.Context, pool *pgxpool.Pool) ([]Exercise, error) {
 	return exercises, nil
 }
 
-func getByID(ctx context.Context, pool *pgxpool.Pool, id int32) (Exercise, error) {
-	var exercise Exercise
+func GetByID(ctx context.Context, pool *pgxpool.Pool, id int32) (model.Exercise, error) {
+	var exercise model.Exercise
 
 	err := pool.QueryRow(ctx, queries.GetExerciseByID, id).Scan(
 		&exercise.ID,

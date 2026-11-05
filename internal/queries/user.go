@@ -1,5 +1,7 @@
 package queries
 
+const DeleteUser = `DELETE FROM "User" WHERE "id" = $1`
+
 const UpdateUser = `
 	UPDATE "User"
 	SET

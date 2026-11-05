@@ -1,4 +1,4 @@
-package exercises
+package handler
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"kheun-Lift-backend-go/internal/exercises/repository"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -18,7 +20,7 @@ func NewExerciseHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
 
-		exercises, err := list(ctx, pool)
+		exercises, err := repository.List(ctx, pool)
 
 		if err != nil {
 			log.Printf("List exercises failed: %v", err)
@@ -47,10 +49,10 @@ func NewGetExerciseByIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
 
-		exercise, err := getByID(ctx, pool, int32(id))
+		exercise, err := repository.GetByID(ctx, pool, int32(id))
 		if errors.Is(err, pgx.ErrNoRows) {
 			c.JSON(http.StatusNotFound, gin.H{
-				"message": "Exercise not found",
+				"message": "model.Exercise not found",
 			})
 			return
 		}

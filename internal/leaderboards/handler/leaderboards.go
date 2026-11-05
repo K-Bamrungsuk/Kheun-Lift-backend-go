@@ -1,4 +1,4 @@
-package leaderboards
+package handler
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"kheun-Lift-backend-go/internal/leaderboards/repository"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -24,9 +26,9 @@ func parseID(c *gin.Context, name string) (int32, bool) {
 
 func respondError(c *gin.Context, err error) {
 	switch {
-	case errors.Is(err, errExerciseNotFound),
-		errors.Is(err, errWeightClassNotFound),
-		errors.Is(err, errWeightClassGender):
+	case errors.Is(err, repository.ErrExerciseNotFound),
+		errors.Is(err, repository.ErrWeightClassNotFound),
+		errors.Is(err, repository.ErrWeightClassGender):
 		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 	default:
 		log.Printf("Leaderboard request failed: %v", err)
@@ -65,11 +67,11 @@ func NewListHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
-		if err := validateFilters(ctx, pool, exerciseID, weightClassID, gender); err != nil {
+		if err := repository.ValidateFilters(ctx, pool, exerciseID, weightClassID, gender); err != nil {
 			respondError(c, err)
 			return
 		}
-		records, err := list(ctx, pool, exerciseID, weightClassID, gender)
+		records, err := repository.List(ctx, pool, exerciseID, weightClassID, gender)
 		if err != nil {
 			respondError(c, err)
 			return
@@ -82,7 +84,7 @@ func NewRandomHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
-		result, err := random(ctx, pool)
+		result, err := repository.Random(ctx, pool)
 		if err != nil {
 			respondError(c, err)
 			return

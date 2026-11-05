@@ -1,4 +1,4 @@
-package lifts
+package model
 
 import "time"
 
@@ -34,4 +34,8 @@ type LiftRecord struct {
 		Name   string `json:"name"`
 		Gender string `json:"gender"`
 	} `json:"weightClass"`
+}
+
+type UpdateInput struct {
+	Caption *string `json:"caption"`
 }

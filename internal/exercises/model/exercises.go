@@ -1,4 +1,4 @@
-package exercises
+package model
 
 type Exercise struct {
 	ID          int     `json:"id"`

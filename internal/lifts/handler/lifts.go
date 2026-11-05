@@ -1,4 +1,4 @@
-package lifts
+package handler
 
 import (
 	"context"
@@ -11,6 +11,9 @@ import (
 	"strconv"
 	"time"
 
+	"kheun-Lift-backend-go/internal/lifts/model"
+	"kheun-Lift-backend-go/internal/lifts/repository"
+	"kheun-Lift-backend-go/internal/lifts/service"
 	"kheun-Lift-backend-go/internal/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -56,14 +59,14 @@ func respondError(c *gin.Context, err error) {
 	status := http.StatusInternalServerError
 	message := "Unable to process lift record."
 	switch {
-	case errors.Is(err, ErrDuplicate):
-		status, message = http.StatusConflict, ErrDuplicate.Error()
-	case errors.Is(err, ErrProfile):
-		status, message = http.StatusBadRequest, ErrProfile.Error()
-	case errors.Is(err, ErrExercise):
-		status, message = http.StatusNotFound, ErrExercise.Error()
-	case errors.Is(err, ErrWeightClass):
-		status, message = http.StatusNotFound, ErrWeightClass.Error()
+	case errors.Is(err, service.ErrDuplicate):
+		status, message = http.StatusConflict, service.ErrDuplicate.Error()
+	case errors.Is(err, service.ErrProfile):
+		status, message = http.StatusBadRequest, service.ErrProfile.Error()
+	case errors.Is(err, service.ErrExercise):
+		status, message = http.StatusNotFound, service.ErrExercise.Error()
+	case errors.Is(err, service.ErrWeightClass):
+		status, message = http.StatusNotFound, service.ErrWeightClass.Error()
 	case errors.Is(err, pgx.ErrNoRows):
 		status, message = http.StatusNotFound, "Lift record not found."
 	default:
@@ -78,7 +81,7 @@ func NewCreateHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		if !ok {
 			return
 		}
-		var input CreateInput
+		var input model.CreateInput
 		if !decodeBody(c, &input) {
 			return
 		}
@@ -95,7 +98,7 @@ func NewCreateHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
-		record, err := create(ctx, pool, userID, input)
+		record, err := service.Create(ctx, pool, userID, input)
 		if err != nil {
 			respondError(c, err)
 			return
@@ -112,7 +115,7 @@ func NewListMineHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
-		records, err := listByUser(ctx, pool, userID)
+		records, err := repository.ListByUser(ctx, pool, userID)
 		if err != nil {
 			respondError(c, err)
 			return
@@ -129,7 +132,7 @@ func NewListByUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
-		records, err := listByUser(ctx, pool, int(id))
+		records, err := repository.ListByUser(ctx, pool, int(id))
 		if err != nil {
 			respondError(c, err)
 			return
@@ -146,7 +149,7 @@ func NewGetLiftByIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
-		record, err := getByID(ctx, pool, id)
+		record, err := repository.GetByID(ctx, pool, id)
 		if err != nil {
 			respondError(c, err)
 			return
@@ -165,9 +168,7 @@ func NewUpdateHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		if !ok {
 			return
 		}
-		var input struct {
-			Caption *string `json:"caption"`
-		}
+		var input model.UpdateInput
 		if !decodeBody(c, &input) {
 			return
 		}
@@ -177,7 +178,7 @@ func NewUpdateHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
-		record, err := updateCaption(ctx, pool, id, userID, *input.Caption)
+		record, err := repository.UpdateCaption(ctx, pool, id, userID, *input.Caption)
 		if err != nil {
 			respondError(c, err)
 			return
@@ -198,7 +199,7 @@ func NewDeleteHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
-		if err := deleteByID(ctx, pool, id, userID); err != nil {
+		if err := repository.DeleteByID(ctx, pool, id, userID); err != nil {
 			respondError(c, err)
 			return
 		}

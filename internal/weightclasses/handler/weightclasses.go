@@ -1,10 +1,12 @@
-package weightclasses
+package handler
 
 import (
 	"context"
 	"log"
 	"net/http"
 	"time"
+
+	"kheun-Lift-backend-go/internal/weightclasses/repository"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,7 +25,7 @@ func NewWeightClassHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
 
-		weightClasses, err := list(ctx, pool, gender)
+		weightClasses, err := repository.List(ctx, pool, gender)
 		if err != nil {
 			log.Printf("List weight classes failed: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{

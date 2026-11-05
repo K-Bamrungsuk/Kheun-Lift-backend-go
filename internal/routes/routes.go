@@ -5,12 +5,12 @@ import (
 	"os"
 
 	authhandler "kheun-Lift-backend-go/internal/auth/handler"
-	"kheun-Lift-backend-go/internal/exercises"
-	"kheun-Lift-backend-go/internal/leaderboards"
-	"kheun-Lift-backend-go/internal/lifts"
+	exerciseshandler "kheun-Lift-backend-go/internal/exercises/handler"
+	leaderboardshandler "kheun-Lift-backend-go/internal/leaderboards/handler"
+	liftshandler "kheun-Lift-backend-go/internal/lifts/handler"
 	appmiddleware "kheun-Lift-backend-go/internal/middleware"
 	userhandler "kheun-Lift-backend-go/internal/user/handler"
-	"kheun-Lift-backend-go/internal/weightclasses"
+	weightclasseshandler "kheun-Lift-backend-go/internal/weightclasses/handler"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -27,11 +27,11 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 		pool,
 		os.Getenv("COOKIE_SECURE") != "false",
 	))
-	router.GET("/exercises", exercises.NewExerciseHandler(pool))
-	router.GET("/exercises/:id", exercises.NewGetExerciseByIDHandler(pool))
-	router.GET("/leaderboards/exercises/:exerciseId", leaderboards.NewListHandler(pool))
-	router.GET("/leaderboards/exercises/:exerciseId/weight-classes/:weightClassId", leaderboards.NewListHandler(pool))
-	router.GET("/leaderboards/random", leaderboards.NewRandomHandler(pool))
+	router.GET("/exercises", exerciseshandler.NewExerciseHandler(pool))
+	router.GET("/exercises/:id", exerciseshandler.NewGetExerciseByIDHandler(pool))
+	router.GET("/leaderboards/exercises/:exerciseId", leaderboardshandler.NewListHandler(pool))
+	router.GET("/leaderboards/exercises/:exerciseId/weight-classes/:weightClassId", leaderboardshandler.NewListHandler(pool))
+	router.GET("/leaderboards/random", leaderboardshandler.NewRandomHandler(pool))
 
 	crossOrigin := http.NewCrossOriginProtection()
 	protected := router.Group("")
@@ -46,14 +46,18 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 	}, appmiddleware.RequireSession(pool))
 
 	protected.GET("/users/me", userhandler.NewGetMeHandler(pool))
-	protected.GET("/weight-classes", weightclasses.NewWeightClassHandler(pool))
+	protected.GET("/weight-classes", weightclasseshandler.NewWeightClassHandler(pool))
 	protected.PATCH("/users/me", userhandler.NewPatchMeHandler(pool))
-	protected.POST("/lifts", lifts.NewCreateHandler(pool))
-	protected.GET("/lifts/me", lifts.NewListMineHandler(pool))
-	protected.GET("/lifts/users/:id", lifts.NewListByUserHandler(pool))
-	protected.GET("/lifts/:id", lifts.NewGetLiftByIDHandler(pool))
-	protected.PATCH("/lifts/:id", lifts.NewUpdateHandler(pool))
-	protected.DELETE("/lifts/:id", lifts.NewDeleteHandler(pool))
+	protected.DELETE("/users/me", userhandler.NewDeleteMeHandler(
+		pool,
+		os.Getenv("COOKIE_SECURE") != "false",
+	))
+	protected.POST("/lifts", liftshandler.NewCreateHandler(pool))
+	protected.GET("/lifts/me", liftshandler.NewListMineHandler(pool))
+	protected.GET("/lifts/users/:id", liftshandler.NewListByUserHandler(pool))
+	protected.GET("/lifts/:id", liftshandler.NewGetLiftByIDHandler(pool))
+	protected.PATCH("/lifts/:id", liftshandler.NewUpdateHandler(pool))
+	protected.DELETE("/lifts/:id", liftshandler.NewDeleteHandler(pool))
 	protected.POST("/auth/logout", authhandler.NewLogoutHandler(
 		pool,
 		os.Getenv("COOKIE_SECURE") != "false",

@@ -1,20 +1,21 @@
-package weightclasses
+package repository
 
 import (
 	"context"
 	"errors"
 
 	"kheun-Lift-backend-go/internal/queries"
+	"kheun-Lift-backend-go/internal/weightclasses/model"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func FindForUser(ctx context.Context, pool *pgxpool.Pool, gender *string, bodyWeight *float64) (*WeightClass, error) {
+func FindForUser(ctx context.Context, pool *pgxpool.Pool, gender *string, bodyWeight *float64) (*model.WeightClass, error) {
 	if gender == nil || bodyWeight == nil {
 		return nil, nil
 	}
-	var weightClass WeightClass
+	var weightClass model.WeightClass
 	err := pool.QueryRow(ctx, queries.FindUserWeightClass, *gender, *bodyWeight).Scan(
 		&weightClass.ID, &weightClass.Gender, &weightClass.Name,
 		&weightClass.MinWeight, &weightClass.MaxWeight,
@@ -29,17 +30,17 @@ func FindForUser(ctx context.Context, pool *pgxpool.Pool, gender *string, bodyWe
 	return &weightClass, nil
 }
 
-func list(ctx context.Context, pool *pgxpool.Pool, gender string) ([]WeightClass, error) {
+func List(ctx context.Context, pool *pgxpool.Pool, gender string) ([]model.WeightClass, error) {
 	rows, err := pool.Query(ctx, queries.ListWeightClasses, gender)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	weightClasses := make([]WeightClass, 0)
+	weightClasses := make([]model.WeightClass, 0)
 
 	for rows.Next() {
-		var weightClass WeightClass
+		var weightClass model.WeightClass
 
 		if err := rows.Scan(
 			&weightClass.ID,

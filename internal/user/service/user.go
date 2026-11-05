@@ -22,3 +22,10 @@ func UpdateUser(
 
 	return repository.UpdateUser(ctx, pool, userID, input)
 }
+
+func DeleteUser(ctx context.Context, pool *pgxpool.Pool, userID int) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	return repository.DeleteUser(ctx, pool, userID)
+}

@@ -7,8 +7,20 @@ import (
 	"kheun-Lift-backend-go/internal/queries"
 	"kheun-Lift-backend-go/internal/user/model"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+func DeleteUser(ctx context.Context, pool *pgxpool.Pool, userID int) error {
+	result, err := pool.Exec(ctx, queries.DeleteUser, userID)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
+}
 
 func UpdateUser(
 	ctx context.Context,
