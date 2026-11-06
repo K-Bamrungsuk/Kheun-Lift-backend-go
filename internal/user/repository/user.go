@@ -11,6 +11,25 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+func GetByID(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	userID int32,
+) (model.PublicUser, error) {
+	var user model.PublicUser
+
+	err := pool.QueryRow(ctx, queries.GetUserByID, userID).Scan(
+		&user.ID,
+		&user.Username,
+		&user.ProfileImage,
+		&user.Gender,
+		&user.BodyWeight,
+		&user.Height,
+	)
+
+	return user, err
+}
+
 func DeleteUser(ctx context.Context, pool *pgxpool.Pool, userID int) error {
 	result, err := pool.Exec(ctx, queries.DeleteUser, userID)
 	if err != nil {

@@ -1,6 +1,20 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	weightclassmodel "kheun-Lift-backend-go/internal/weightclasses/model"
+)
+
+type PublicUser struct {
+	ID           int                           `json:"id"`
+	Username     string                        `json:"username"`
+	ProfileImage *string                       `json:"profileImage"`
+	Gender       *string                       `json:"gender"`
+	BodyWeight   *float64                      `json:"bodyWeight"`
+	Height       *float64                      `json:"height"`
+	WeightClass  *weightclassmodel.WeightClass `json:"weightClass"`
+}
 
 type UpdateUserInput struct {
 	Username     *string

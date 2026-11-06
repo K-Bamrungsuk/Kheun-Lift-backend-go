@@ -1,5 +1,11 @@
 package queries
 
+const GetUserByID = `
+	SELECT "id", "username", "profileImage", "gender", "bodyWeight", "height"
+	FROM "User"
+	WHERE "id" = $1
+`
+
 const DeleteUser = `DELETE FROM "User" WHERE "id" = $1`
 
 const UpdateUser = `
