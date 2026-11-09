@@ -30,17 +30,6 @@ func GetByID(
 	return user, err
 }
 
-func DeleteUser(ctx context.Context, pool *pgxpool.Pool, userID int) error {
-	result, err := pool.Exec(ctx, queries.DeleteUser, userID)
-	if err != nil {
-		return err
-	}
-	if result.RowsAffected() == 0 {
-		return pgx.ErrNoRows
-	}
-	return nil
-}
-
 func UpdateUser(
 	ctx context.Context,
 	pool *pgxpool.Pool,
@@ -67,4 +56,15 @@ func UpdateUser(
 	)
 
 	return user, err
+}
+
+func DeleteUser(ctx context.Context, pool *pgxpool.Pool, userID int) error {
+	result, err := pool.Exec(ctx, queries.DeleteUser, userID)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
 }

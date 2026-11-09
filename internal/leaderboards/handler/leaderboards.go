@@ -76,7 +76,11 @@ func NewListHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			respondError(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, records)
+		message := "No leaderboard available"
+		if len(records) > 0 {
+			message = "Get leaderboard successfully"
+		}
+		c.JSON(http.StatusOK, gin.H{"message": message, "data": records})
 	}
 }
 
