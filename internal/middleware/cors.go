@@ -9,6 +9,7 @@ import (
 // CORS lets the Next app (allowedOrigin) call this API with cookies.
 func CORS(allowedOrigin string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Vary: Origin keeps caches from reusing one origin's CORS headers for another.
 		c.Header("Vary", "Origin")
 		if allowedOrigin != "" && c.GetHeader("Origin") == allowedOrigin {
 			c.Header("Access-Control-Allow-Origin", allowedOrigin)

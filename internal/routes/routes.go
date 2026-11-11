@@ -18,7 +18,7 @@ import (
 )
 
 func Setup(router *gin.Engine, pool *pgxpool.Pool) {
-
+	// CORS must be registered before any route so preflight (OPTIONS) requests are answered.
 	router.Use(appmiddleware.CORS(os.Getenv("APP_ORIGIN")))
 
 	router.GET("/health", func(c *gin.Context) {
@@ -42,6 +42,7 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 
 	// Routes requiring a session
 	crossOrigin := http.NewCrossOriginProtection()
+	// Trust the Next app for writes; every other origin still gets 403.
 	if origin := os.Getenv("APP_ORIGIN"); origin != "" {
 		if err := crossOrigin.AddTrustedOrigin(origin); err != nil {
 			log.Fatalf("invalid APP_ORIGIN: %v", err)
