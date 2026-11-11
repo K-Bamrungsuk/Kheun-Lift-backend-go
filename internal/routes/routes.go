@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"log"
 	"net/http"
 	"os"
 
@@ -17,6 +18,9 @@ import (
 )
 
 func Setup(router *gin.Engine, pool *pgxpool.Pool) {
+
+	router.Use(appmiddleware.CORS(os.Getenv("APP_ORIGIN")))
+
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
@@ -38,6 +42,12 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 
 	// Routes requiring a session
 	crossOrigin := http.NewCrossOriginProtection()
+	if origin := os.Getenv("APP_ORIGIN"); origin != "" {
+		if err := crossOrigin.AddTrustedOrigin(origin); err != nil {
+			log.Fatalf("invalid APP_ORIGIN: %v", err)
+		}
+	}
+
 	protected := router.Group("")
 	protected.Use(func(c *gin.Context) {
 		if err := crossOrigin.Check(c.Request); err != nil {
