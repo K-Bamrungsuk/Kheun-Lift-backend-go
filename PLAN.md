@@ -28,6 +28,7 @@ app.<domain> (Next, Vercel) ──► api.<domain> (Go, Render/Railway) ──�
 | Test | เฉพาะจุดเสี่ยง, ต้องอนุมัติ | auth, OTP, ranking |
 | Reject | ต้องมีเหตุผล | ผู้ใช้ต้องรู้ว่าทำไมไม่ผ่าน |
 | AI | ช่วย admin เท่านั้น ไม่ verify เอง | AI ตัดสินความลึก / lockout ไม่ได้ |
+| หน้าเว็บ | mobile first, ต้อง login ก่อนทุกหน้า | ผู้ใช้หลักเข้าจากมือถือ ไม่มีหน้า public |
 
 ## กติกาโค้ด Go
 
@@ -51,7 +52,6 @@ app.<domain> (Next, Vercel) ──► api.<domain> (Go, Render/Railway) ──�
 - [ ] รวมโค้ดตั้ง cookie เป็นฟังก์ชันเดียว ใช้ทั้ง login / logout / ลบบัญชี + เพิ่ม `COOKIE_DOMAIN`
   - ⚠ ถ้าไม่ทำ: login บน prod แล้ว Next มองไม่เห็น cookie และ logout ลบ cookie ไม่ได้
 - [ ] rate limit เห็น IP จริง: ตอนนี้ `SetTrustedProxies(nil)` → ตั้ง `TrustedPlatform` ตาม docs ของ host
-- [ ] ย้าย `GET /weight-classes` เป็น public (หน้า leaderboard ดูได้โดยไม่ login)
 - [ ] deploy + `make migrate` กับ prod (ขออนุมัติก่อน, ห้าม `make seed`)
 
 **เสร็จเมื่อ:** สมัคร → login → กรอกโปรไฟล์ → ส่ง lift ได้บน app.<domain>, logout แล้ว cookie หาย
