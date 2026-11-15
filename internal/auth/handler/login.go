@@ -1,20 +1,19 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
-	"mime"
 	"net/http"
 	"strings"
 
 	"kheun-Lift-backend-go/internal/auth/model"
 	"kheun-Lift-backend-go/internal/auth/service"
+	"kheun-Lift-backend-go/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewLoginHandler(pool *pgxpool.Pool, secureCookie bool) gin.HandlerFunc {
+func NewLoginHandler(pool *pgxpool.Pool, cookie middleware.SessionCookie) gin.HandlerFunc {
 	hashSlots := make(chan struct{}, 2)
 
 	return func(c *gin.Context) {
@@ -26,20 +25,8 @@ func NewLoginHandler(pool *pgxpool.Pool, secureCookie bool) gin.HandlerFunc {
 			})
 		}
 
-		contentType, _, err := mime.ParseMediaType(
-			c.GetHeader("Content-Type"),
-		)
-		if err != nil || contentType != "application/json" {
-			fail(http.StatusUnsupportedMediaType, "Use application/json.")
-			return
-		}
-
-		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 16*1024)
-		decoder := json.NewDecoder(c.Request.Body)
-
 		var input model.LoginInput
-		if err := decoder.Decode(&input); err != nil {
-			fail(http.StatusBadRequest, "Invalid JSON or request body too large.")
+		if !middleware.DecodeBody(c, &input) {
 			return
 		}
 
@@ -69,16 +56,7 @@ func NewLoginHandler(pool *pgxpool.Pool, secureCookie bool) gin.HandlerFunc {
 			return
 		}
 
-		http.SetCookie(c.Writer, &http.Cookie{
-			Name:     "kheun_session",
-			Value:    result.Token,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   secureCookie,
-			SameSite: http.SameSiteLaxMode,
-			MaxAge:   86400,
-			Expires:  result.ExpiresAt,
-		})
+		cookie.Set(c.Writer, result.Token, result.ExpiresAt)
 		c.JSON(http.StatusOK, map[string]any{
 			"message": "Welcome! Ready to update your PRs?",
 			"user":    result.User,

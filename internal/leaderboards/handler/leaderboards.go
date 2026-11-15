@@ -6,23 +6,14 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"kheun-Lift-backend-go/internal/leaderboards/repository"
+	"kheun-Lift-backend-go/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-func parseID(c *gin.Context, name string) (int32, bool) {
-	id, err := strconv.ParseInt(c.Param(name), 10, 32)
-	if err != nil || id <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"message": name + " must be a positive 32-bit integer."})
-		return 0, false
-	}
-	return int32(id), true
-}
 
 func respondError(c *gin.Context, err error) {
 	switch {
@@ -38,13 +29,13 @@ func respondError(c *gin.Context, err error) {
 
 func NewListHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		exerciseID, ok := parseID(c, "exerciseId")
+		exerciseID, ok := middleware.ParseID(c, "exerciseId")
 		if !ok {
 			return
 		}
 		var weightClassID *int32
 		if c.Param("weightClassId") != "" {
-			id, ok := parseID(c, "weightClassId")
+			id, ok := middleware.ParseID(c, "weightClassId")
 			if !ok {
 				return
 			}

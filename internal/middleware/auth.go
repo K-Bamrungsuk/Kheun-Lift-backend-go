@@ -22,7 +22,7 @@ func RequireSession(pool *pgxpool.Pool) gin.HandlerFunc {
 			c.AbortWithStatusJSON(status, gin.H{"message": message})
 		}
 
-		cookie, err := c.Request.Cookie("kheun_session")
+		cookie, err := c.Request.Cookie(sessionCookieName)
 		if err != nil || cookie.Value == "" {
 			fail(http.StatusUnauthorized, "Please login.")
 			return

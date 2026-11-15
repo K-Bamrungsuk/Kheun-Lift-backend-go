@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"time"
 
 	"kheun-Lift-backend-go/internal/middleware"
 	"kheun-Lift-backend-go/internal/user/service"
@@ -15,7 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewDeleteMeHandler(pool *pgxpool.Pool, secureCookie bool) gin.HandlerFunc {
+func NewDeleteMeHandler(pool *pgxpool.Pool, cookie middleware.SessionCookie) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session, ok := middleware.SessionFromContext(c.Request.Context())
 		if !ok {
@@ -38,16 +37,7 @@ func NewDeleteMeHandler(pool *pgxpool.Pool, secureCookie bool) gin.HandlerFunc {
 			return
 		}
 
-		http.SetCookie(c.Writer, &http.Cookie{
-			Name:     "kheun_session",
-			Value:    "",
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   secureCookie,
-			SameSite: http.SameSiteLaxMode,
-			MaxAge:   -1,
-			Expires:  time.Unix(0, 0).UTC(),
-		})
+		cookie.Clear(c.Writer)
 		c.JSON(http.StatusOK, gin.H{"message": "Account deleted successfully"})
 	}
 }

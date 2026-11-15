@@ -3,7 +3,6 @@ package handler
 import (
 	"log"
 	"net/http"
-	"time"
 
 	"kheun-Lift-backend-go/internal/auth/service"
 	"kheun-Lift-backend-go/internal/middleware"
@@ -14,7 +13,7 @@ import (
 
 func NewLogoutHandler(
 	pool *pgxpool.Pool,
-	secureCookie bool,
+	cookie middleware.SessionCookie,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session, ok := middleware.SessionFromContext(c.Request.Context())
@@ -35,16 +34,7 @@ func NewLogoutHandler(
 			return
 		}
 
-		http.SetCookie(c.Writer, &http.Cookie{
-			Name:     "kheun_session",
-			Value:    "",
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   secureCookie,
-			SameSite: http.SameSiteLaxMode,
-			MaxAge:   -1,
-			Expires:  time.Unix(0, 0).UTC(),
-		})
+		cookie.Clear(c.Writer)
 
 		c.JSON(http.StatusOK, map[string]string{
 			"message": "Logged out successfully.",

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 
 	"kheun-Lift-backend-go/internal/auth/model"
 	"kheun-Lift-backend-go/internal/auth/service"
+	"kheun-Lift-backend-go/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -43,14 +43,8 @@ func NewRegisterHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	hashSlots := make(chan struct{}, 2)
 
 	return func(c *gin.Context) {
-		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 16*1024)
-		decoder := json.NewDecoder(c.Request.Body)
-
 		var input model.RegisterInput
-		if err := decoder.Decode(&input); err != nil {
-			c.JSON(http.StatusBadRequest, map[string]string{
-				"message": "Invalid JSON or request body too large.",
-			})
+		if !middleware.DecodeBody(c, &input) {
 			return
 		}
 

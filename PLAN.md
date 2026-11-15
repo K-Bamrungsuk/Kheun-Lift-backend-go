@@ -49,8 +49,8 @@ app.<domain> (Next, Vercel) ──► api.<domain> (Go, Render/Railway) ──�
 
 - [ ] ซื้อ domain, สมัคร Render/Railway + Resend + Google Cloud, สร้าง Neon prod
   - dev DB มี user ปลอม `password123` ห้ามใช้เป็น prod
-- [ ] รวมโค้ดตั้ง cookie เป็นฟังก์ชันเดียว ใช้ทั้ง login / logout / ลบบัญชี + เพิ่ม `COOKIE_DOMAIN`
-  - ⚠ ถ้าไม่ทำ: login บน prod แล้ว Next มองไม่เห็น cookie และ logout ลบ cookie ไม่ได้
+- [x] รวมโค้ดตั้ง cookie เป็นฟังก์ชันเดียว ใช้ทั้ง login / logout / ลบบัญชี + เพิ่ม `COOKIE_DOMAIN` (`internal/middleware/cookie.go`)
+  - ⚠ ต้องตั้ง `COOKIE_DOMAIN=.<domain>` บน prod ไม่งั้น Next มองไม่เห็น cookie; ยังไม่ได้ทดสอบบน domain จริง
 - [ ] rate limit เห็น IP จริง: ตอนนี้ `SetTrustedProxies(nil)` → ตั้ง `TrustedPlatform` ตาม docs ของ host
 - [ ] deploy + `make migrate` กับ prod (ขออนุมัติก่อน, ห้าม `make seed`)
 

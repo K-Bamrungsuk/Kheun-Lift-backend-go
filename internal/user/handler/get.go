@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	authmodel "kheun-Lift-backend-go/internal/auth/model"
@@ -21,18 +20,15 @@ import (
 
 func NewGetUserByIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, err := strconv.ParseInt(c.Param("id"), 10, 32)
-		if err != nil || id <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": "id must be a positive 32-bit integer",
-			})
+		id, ok := middleware.ParseID(c, "id")
+		if !ok {
 			return
 		}
 
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
 
-		user, err := repository.GetByID(ctx, pool, int32(id))
+		user, err := repository.GetByID(ctx, pool, id)
 		if errors.Is(err, pgx.ErrNoRows) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"message": "User not found.",

@@ -2,13 +2,10 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log"
-	"mime"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"kheun-Lift-backend-go/internal/lifts/model"
@@ -20,31 +17,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-func decodeBody(c *gin.Context, input any) bool {
-	contentType, _, err := mime.ParseMediaType(c.GetHeader("Content-Type"))
-	if err != nil || contentType != "application/json" {
-		c.JSON(http.StatusUnsupportedMediaType, gin.H{"message": "Use application/json."})
-		return false
-	}
-	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 16*1024)
-	decoder := json.NewDecoder(c.Request.Body)
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid JSON, unsupported fields or request body too large."})
-		return false
-	}
-	return true
-}
-
-func parseID(c *gin.Context) (int32, bool) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 32)
-	if err != nil || id <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "id must be a positive 32-bit integer."})
-		return 0, false
-	}
-	return int32(id), true
-}
 
 func sessionUserID(c *gin.Context) (int, bool) {
 	session, ok := middleware.SessionFromContext(c.Request.Context())
@@ -82,7 +54,7 @@ func NewCreateHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 		var input model.CreateInput
-		if !decodeBody(c, &input) {
+		if !middleware.DecodeBody(c, &input) {
 			return
 		}
 		if input.ExerciseID <= 0 || input.Reps <= 0 || input.Weight <= 0 {
@@ -126,7 +98,7 @@ func NewListMineHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 func NewListByUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, ok := parseID(c)
+		id, ok := middleware.ParseID(c, "id")
 		if !ok {
 			return
 		}
@@ -143,7 +115,7 @@ func NewListByUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 func NewGetLiftByIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id, ok := parseID(c)
+		id, ok := middleware.ParseID(c, "id")
 		if !ok {
 			return
 		}
@@ -164,12 +136,12 @@ func NewUpdateHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		if !ok {
 			return
 		}
-		id, ok := parseID(c)
+		id, ok := middleware.ParseID(c, "id")
 		if !ok {
 			return
 		}
 		var input model.UpdateInput
-		if !decodeBody(c, &input) {
+		if !middleware.DecodeBody(c, &input) {
 			return
 		}
 		if input.Caption == nil {
@@ -193,7 +165,7 @@ func NewDeleteHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		if !ok {
 			return
 		}
-		id, ok := parseID(c)
+		id, ok := middleware.ParseID(c, "id")
 		if !ok {
 			return
 		}

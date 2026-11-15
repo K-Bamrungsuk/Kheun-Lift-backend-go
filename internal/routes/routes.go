@@ -18,8 +18,15 @@ import (
 )
 
 func Setup(router *gin.Engine, pool *pgxpool.Pool) {
+	// Env is read once here; handlers receive values.
+	appOrigin := os.Getenv("APP_ORIGIN")
+	cookie := appmiddleware.SessionCookie{
+		Secure: os.Getenv("COOKIE_SECURE") != "false",
+		Domain: os.Getenv("COOKIE_DOMAIN"),
+	}
+
 	// CORS must be registered before any route so preflight (OPTIONS) requests are answered.
-	router.Use(appmiddleware.CORS(os.Getenv("APP_ORIGIN")))
+	router.Use(appmiddleware.CORS(appOrigin))
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
@@ -28,10 +35,7 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 	// Public authentication
 	authRateLimit := appmiddleware.RateLimit()
 	router.POST("/auth/register", authRateLimit, authhandler.NewRegisterHandler(pool))
-	router.POST("/auth/login", authRateLimit, authhandler.NewLoginHandler(
-		pool,
-		os.Getenv("COOKIE_SECURE") != "false",
-	))
+	router.POST("/auth/login", authRateLimit, authhandler.NewLoginHandler(pool, cookie))
 
 	// Public exercises and leaderboards
 	router.GET("/exercises", exerciseshandler.NewExerciseHandler(pool))
@@ -43,8 +47,8 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 	// Routes requiring a session
 	crossOrigin := http.NewCrossOriginProtection()
 	// Trust the Next app for writes; every other origin still gets 403.
-	if origin := os.Getenv("APP_ORIGIN"); origin != "" {
-		if err := crossOrigin.AddTrustedOrigin(origin); err != nil {
+	if appOrigin != "" {
+		if err := crossOrigin.AddTrustedOrigin(appOrigin); err != nil {
 			log.Fatalf("invalid APP_ORIGIN: %v", err)
 		}
 	}
@@ -65,10 +69,7 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 	protected.GET("/users/:id", userhandler.NewGetUserByIDHandler(pool))
 	protected.GET("/weight-classes", weightclasseshandler.NewWeightClassHandler(pool))
 	protected.PATCH("/users/me", userhandler.NewPatchMeHandler(pool))
-	protected.DELETE("/users/me", userhandler.NewDeleteMeHandler(
-		pool,
-		os.Getenv("COOKIE_SECURE") != "false",
-	))
+	protected.DELETE("/users/me", userhandler.NewDeleteMeHandler(pool, cookie))
 
 	// Lift records
 	protected.POST("/lifts", liftshandler.NewCreateHandler(pool))
@@ -79,8 +80,5 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 	protected.DELETE("/lifts/:id", liftshandler.NewDeleteHandler(pool))
 
 	// Session
-	protected.POST("/auth/logout", authhandler.NewLogoutHandler(
-		pool,
-		os.Getenv("COOKIE_SECURE") != "false",
-	))
+	protected.POST("/auth/logout", authhandler.NewLogoutHandler(pool, cookie))
 }
