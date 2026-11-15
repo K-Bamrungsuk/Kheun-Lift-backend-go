@@ -110,7 +110,7 @@
 
 ## สัปดาห์ 0 — เตรียมตัว
 
-- [ ] **B0.1 Commit งานค้าง** — ย้าย seed ไป `seeds/` + `Makefile` + ไฟล์ `PLAN.md` นี้
+- [x] **B0.1 Commit งานค้าง** — ย้าย seed ไป `seeds/` + `Makefile` + ไฟล์ `PLAN.md` นี้
 - [ ] **B0.2 ซื้อ domain** — ร้านไหนก็ได้ (Cloudflare Registrar, Namecheap, Porkbun) ราคาประมาณ 300–500 บาท/ปี
   - **ทำไมรีบ:** การยืนยัน DNS ของ Resend / Vercel ใช้เวลาตั้งแต่ไม่กี่นาทีถึงหลายชั่วโมง
 - [ ] **B0.3 สมัครบริการ** — Render หรือ Railway (เลือกตัวเดียว), Resend, Google Cloud (สร้าง OAuth client ไว้ก่อน)
@@ -145,7 +145,7 @@
   4. อ่านค่าจาก env (`TRUSTED_PLATFORM_HEADER`) เพื่อให้บนเครื่องยังทำงานแบบเดิม
 - **เสร็จเมื่อ:** เพิ่ม log ชั่วคราว พิมพ์ `c.ClientIP()` ตอน login บน host จริง → ต้องเป็น IP บ้านเรา (เช็กกับ whatismyip) แล้วลบ log ออก
 
-### B1.3 CORS + trusted origin
+### B1.3 CORS + trusted origin — 🟡 เสร็จบนเครื่อง (ทดสอบจาก `localhost:3002` แล้ว) รอทดสอบบน `app.<domain>`
 - **ทำอะไร:** ยอมให้ `https://app.<domain>` เรียก API พร้อม cookie
 - **ทำไม:** browser จะบล็อก response ถ้า Go ไม่ตอบ header CORS, และ `CrossOriginProtection` จะตอบ 403 กับ POST ที่มาจาก `app.`
 - **ทำยังไง:**
@@ -495,7 +495,7 @@ DROP TABLE "Notification";
 | `PORT` | มีอยู่แล้ว | `3001` | host ตั้งให้ |
 | `COOKIE_SECURE` | มีอยู่แล้ว | `false` | ไม่ใส่ (default = secure) |
 | `COOKIE_DOMAIN` | B1.4 | ว่าง | `.<domain>` |
-| `APP_ORIGIN` | B1.3 | `http://localhost:3000` | `https://app.<domain>` |
+| `APP_ORIGIN` | B1.3 | `http://localhost:3002` | `https://app.<domain>` |
 | `TRUSTED_PLATFORM_HEADER` | B1.2 | ว่าง | ตาม docs ของ host |
 | `RESEND_API_KEY` | B3.2 | key ทดสอบ | key จริง |
 | `EMAIL_FROM` | B3.2 | — | `Kheun Lift <noreply@<domain>>` |
