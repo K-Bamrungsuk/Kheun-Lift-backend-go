@@ -39,8 +39,6 @@ func decodeUpdateUser(body io.Reader) (model.UpdateUserInput, error) {
 		switch field {
 		case "username":
 			target = &input.Username
-		case "profileImage":
-			target = &input.ProfileImage
 		case "bodyWeight":
 			target = &input.BodyWeight
 		case "height":

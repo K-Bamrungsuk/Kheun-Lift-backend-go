@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"unicode/utf8"
 
 	"kheun-Lift-backend-go/internal/lifts/model"
 	"kheun-Lift-backend-go/internal/lifts/repository"
@@ -25,6 +26,17 @@ func sessionUserID(c *gin.Context) (int, bool) {
 		return 0, false
 	}
 	return session.User.ID, true
+}
+
+// Same limit as the caption field in the Next form.
+const maxCaptionLength = 300
+
+func validCaption(c *gin.Context, caption *string) bool {
+	if caption != nil && utf8.RuneCountInString(*caption) > maxCaptionLength {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "caption must be at most 300 characters."})
+		return false
+	}
+	return true
 }
 
 func respondError(c *gin.Context, err error) {
@@ -61,12 +73,17 @@ func NewCreateHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "exerciseId and reps must be positive 32-bit integers; weight must be a positive finite number."})
 			return
 		}
-		if input.VideoURL != nil {
-			videoURL, err := url.Parse(*input.VideoURL)
-			if err != nil || videoURL.Hostname() == "" || (videoURL.Scheme != "http" && videoURL.Scheme != "https") {
-				c.JSON(http.StatusBadRequest, gin.H{"message": "videoUrl must be an absolute HTTP or HTTPS URL."})
-				return
-			}
+		if input.VideoURL == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "videoUrl is required."})
+			return
+		}
+		videoURL, err := url.Parse(*input.VideoURL)
+		if err != nil || videoURL.Hostname() == "" || (videoURL.Scheme != "http" && videoURL.Scheme != "https") {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "videoUrl must be an absolute HTTP or HTTPS URL."})
+			return
+		}
+		if !validCaption(c, input.Caption) {
+			return
 		}
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
@@ -146,6 +163,9 @@ func NewUpdateHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 		if input.Caption == nil {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "caption is required and must be a string."})
+			return
+		}
+		if !validCaption(c, input.Caption) {
 			return
 		}
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
