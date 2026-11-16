@@ -53,6 +53,11 @@ app.<domain> (Next, Vercel) ──► api.<domain> (Go, Render/Railway) ──�
   - ⚠ ต้องตั้ง `COOKIE_DOMAIN=.<domain>` บน prod ไม่งั้น Next มองไม่เห็น cookie; ยังไม่ได้ทดสอบบน domain จริง
 - [ ] rate limit เห็น IP จริง: ตอนนี้ `SetTrustedProxies(nil)` → ตั้ง `TrustedPlatform` ตาม docs ของ host
 - [ ] deploy + `make migrate` กับ prod (ขออนุมัติก่อน, ห้าม `make seed`)
+- [ ] สร้าง bucket R2 prod + custom domain + ตั้ง env `R2_*` (bucket dev ใช้ r2.dev ทำแล้ว)
+- [x] `POST /users/me/profile-image` (multipart ช่อง `profileImage`, ≤ 2 MB, jpeg/png/webp ตรวจจากเนื้อไฟล์) เก็บที่ R2 key `profile-images/<userId>` เขียนทับรูปเดิม, ลบบัญชีแล้วลบรูปด้วย
+  - ทดสอบอัปรูปกับ bucket dev แล้ว เปิดลิงก์เห็นรูป; frontend ยังไม่ได้ทำ
+- [x] `DELETE /users/me/profile-image` ลบใน R2 ก่อนแล้วตั้ง `profileImage` = NULL, กดซ้ำได้ 200
+  - ⚠ ยังไม่ได้ทดสอบกับ R2 จริง
 
 **เสร็จเมื่อ:** สมัคร → login → กรอกโปรไฟล์ → ส่ง lift ได้บน app.<domain>, logout แล้ว cookie หาย
 
@@ -155,6 +160,7 @@ feed = lift ที่ verified เรียงใหม่สุดก่อน 
 | `RESEND_API_KEY`, `EMAIL_FROM` | key ทดสอบ | key จริง, `noreply@<domain>` |
 | `GOOGLE_CLIENT_ID` / `_SECRET` / `_REDIRECT_URL` | `http://localhost:3001/auth/google/callback` | `https://api.<domain>/auth/google/callback` |
 | `ANTHROPIC_API_KEY` | key ทดสอบ | key จริง |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL` | bucket dev (ว่างได้ อัปรูปจะได้ 500) | bucket prod |
 
 ทุกตัวต้องอยู่ใน `.env.example` (ค่าว่าง) — ห้าม commit `.env`
 

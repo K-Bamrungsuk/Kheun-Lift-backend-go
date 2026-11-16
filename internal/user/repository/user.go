@@ -58,6 +58,17 @@ func UpdateUser(
 	return user, err
 }
 
+func ClearProfileImage(ctx context.Context, pool *pgxpool.Pool, userID int) error {
+	result, err := pool.Exec(ctx, queries.ClearProfileImage, userID)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
+}
+
 func DeleteUser(ctx context.Context, pool *pgxpool.Pool, userID int) error {
 	result, err := pool.Exec(ctx, queries.DeleteUser, userID)
 	if err != nil {

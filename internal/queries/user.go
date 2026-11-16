@@ -8,6 +8,12 @@ const GetUserByID = `
 
 const DeleteUser = `DELETE FROM "User" WHERE "id" = $1`
 
+const ClearProfileImage = `
+	UPDATE "User"
+	SET "profileImage" = NULL, "updatedAt" = CURRENT_TIMESTAMP
+	WHERE "id" = $1
+`
+
 const UpdateUser = `
 	UPDATE "User"
 	SET

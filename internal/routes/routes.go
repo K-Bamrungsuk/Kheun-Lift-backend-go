@@ -11,6 +11,7 @@ import (
 	liftshandler "kheun-Lift-backend-go/internal/lifts/handler"
 	appmiddleware "kheun-Lift-backend-go/internal/middleware"
 	userhandler "kheun-Lift-backend-go/internal/user/handler"
+	userrepository "kheun-Lift-backend-go/internal/user/repository"
 	weightclasseshandler "kheun-Lift-backend-go/internal/weightclasses/handler"
 
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,13 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 		Secure: os.Getenv("COOKIE_SECURE") != "false",
 		Domain: os.Getenv("COOKIE_DOMAIN"),
 	}
+	profileImages := userrepository.NewProfileImageStore(
+		os.Getenv("R2_ACCOUNT_ID"),
+		os.Getenv("R2_ACCESS_KEY_ID"),
+		os.Getenv("R2_SECRET_ACCESS_KEY"),
+		os.Getenv("R2_BUCKET"),
+		os.Getenv("R2_PUBLIC_URL"),
+	)
 
 	// CORS must be registered before any route so preflight (OPTIONS) requests are answered.
 	router.Use(appmiddleware.CORS(appOrigin))
@@ -69,7 +77,9 @@ func Setup(router *gin.Engine, pool *pgxpool.Pool) {
 	protected.GET("/users/:id", userhandler.NewGetUserByIDHandler(pool))
 	protected.GET("/weight-classes", weightclasseshandler.NewWeightClassHandler(pool))
 	protected.PATCH("/users/me", userhandler.NewPatchMeHandler(pool))
-	protected.DELETE("/users/me", userhandler.NewDeleteMeHandler(pool, cookie))
+	protected.POST("/users/me/profile-image", userhandler.NewUploadProfileImageHandler(pool, profileImages))
+	protected.DELETE("/users/me/profile-image", userhandler.NewDeleteProfileImageHandler(pool, profileImages))
+	protected.DELETE("/users/me", userhandler.NewDeleteMeHandler(pool, cookie, profileImages))
 
 	// Lift records
 	protected.POST("/lifts", liftshandler.NewCreateHandler(pool))
