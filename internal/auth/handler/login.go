@@ -59,7 +59,7 @@ func NewLoginHandler(pool *pgxpool.Pool, cookie middleware.SessionCookie) gin.Ha
 		cookie.Set(c.Writer, result.Token, result.ExpiresAt)
 		c.JSON(http.StatusOK, map[string]any{
 			"message": "Welcome! Ready to update your PRs?",
-			"user":    result.User,
+			"data":    result.User,
 		})
 	}
 }

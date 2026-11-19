@@ -72,7 +72,7 @@ func NewUploadProfileImageHandler(pool *pgxpool.Pool, store *repository.ProfileI
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"user": user})
+		c.JSON(http.StatusOK, gin.H{"message": "Profile image uploaded.", "data": user})
 	}
 }
 

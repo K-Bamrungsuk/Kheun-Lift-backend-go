@@ -87,7 +87,7 @@ func NewRegisterHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		c.JSON(http.StatusCreated, map[string]any{
 			"message": "Registration successful! Ready to smash your PR?",
-			"user":    user,
+			"data":    user,
 		})
 	}
 }

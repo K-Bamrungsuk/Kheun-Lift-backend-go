@@ -54,7 +54,7 @@ func NewGetUserByIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"user": user})
+		c.JSON(http.StatusOK, gin.H{"message": "Get user successfully", "data": user})
 	}
 }
 
@@ -77,7 +77,8 @@ func NewGetMeHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{
-			"user": struct {
+			"message": "Get profile successfully",
+			"data": struct {
 				authmodel.User
 				WeightClass *weightclassmodel.WeightClass `json:"weightClass"`
 			}{User: session.User, WeightClass: weightClass},

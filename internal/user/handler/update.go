@@ -148,7 +148,8 @@ func NewPatchMeHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, map[string]any{
-			"user": user,
+			"message": "Update profile successfully",
+			"data":    user,
 		})
 	}
 }

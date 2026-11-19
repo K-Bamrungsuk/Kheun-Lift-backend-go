@@ -31,7 +31,8 @@ func NewExerciseHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"exercises": exercises,
+			"message": "Get exercises successfully",
+			"data":    exercises,
 		})
 	}
 }
@@ -62,7 +63,8 @@ func NewGetExerciseByIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"exercise": exercise,
+			"message": "Get exercise successfully",
+			"data":    exercise,
 		})
 	}
 }
