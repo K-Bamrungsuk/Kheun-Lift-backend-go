@@ -23,7 +23,8 @@ type LiftRecord struct {
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
 	User          struct {
-		Username string `json:"username"`
+		Username     string  `json:"username"`
+		ProfileImage *string `json:"profileImage"`
 	} `json:"user"`
 	Exercise struct {
 		ID   int    `json:"id"`

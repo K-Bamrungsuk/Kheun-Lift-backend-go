@@ -16,7 +16,7 @@ func scanLift(row pgx.Row) (model.LiftRecord, error) {
 		&record.ID, &record.UserID, &record.ExerciseID, &record.WeightClassID,
 		&record.Weight, &record.Reps, &record.Caption, &record.VideoURL,
 		&record.Status, &record.CreatedAt, &record.UpdatedAt,
-		&record.User.Username, &record.Exercise.Name,
+		&record.User.Username, &record.User.ProfileImage, &record.Exercise.Name,
 		&record.WeightClass.Name, &record.WeightClass.Gender,
 	)
 	record.Exercise.ID = record.ExerciseID

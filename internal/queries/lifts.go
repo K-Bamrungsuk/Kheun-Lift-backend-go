@@ -3,7 +3,7 @@ package queries
 const liftColumns = `
 	SELECT l."id", l."userId", l."exerciseId", l."weightClassId",
 	       l."weight", l."reps", l."caption", l."videoUrl", l."status",
-	       l."createdAt", l."updatedAt", u."username", e."name", w."name", w."gender"
+	       l."createdAt", l."updatedAt", u."username", u."profileImage", e."name", w."name", w."gender"
 `
 
 const liftJoins = `
