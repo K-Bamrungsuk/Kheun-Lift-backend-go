@@ -9,7 +9,7 @@
 ## สถาปัตยกรรม
 
 ```
-app.<domain> (Next, Vercel) ──► api.<domain> (Go, Render/Railway) ──► Neon Postgres (Singapore)
+app.<domain> (Next, Vercel) ──► api.<domain> (Go, Railway) ──► Neon Postgres (Singapore)
                                           └──► Resend (email), Google OAuth, Claude API
 ```
 
@@ -22,7 +22,8 @@ app.<domain> (Next, Vercel) ──► api.<domain> (Go, Render/Railway) ──�
 | เรื่อง | เลือก | เหตุผล |
 |---|---|---|
 | เชื่อม Next กับ Go | domain ของตัวเอง แยก app. / api. | same-site, cookie ส่งข้ามได้ |
-| Host | Vercel / Render หรือ Railway / Neon prod ใหม่ | ฟรีหรือถูก, อยู่ใกล้ไทย |
+| Host | Vercel / Railway Hobby / Neon prod ใหม่ | Railway ไม่หลับ (~$5/เดือน), region Singapore |
+| Domain + DNS | Cloudflare Registrar | ราคาทุน, DNS อยู่ที่เดียวกับ R2 |
 | Email | Resend ผ่าน `net/http` | ไม่ต้องลง SDK |
 | Repost | ไม่ทำ | ซับซ้อน แต่ไม่โชว์ฝีมือเพิ่ม |
 | Test | เฉพาะจุดเสี่ยง, ต้องอนุมัติ | auth, OTP, ranking |
@@ -47,11 +48,12 @@ app.<domain> (Next, Vercel) ──► api.<domain> (Go, Render/Railway) ──�
 
 ## Phase 1 — Deploy
 
-- [ ] ซื้อ domain, สมัคร Render/Railway + Resend + Google Cloud, สร้าง Neon prod
+- [ ] ซื้อ domain ที่ Cloudflare, สมัคร Railway (Hobby, Singapore) + Resend + Google Cloud, สร้าง Neon prod
+  - DNS (เมฆสีเทา): `app` → Vercel, `api` → Railway, `img` → R2 prod
   - dev DB มี user ปลอม `password123` ห้ามใช้เป็น prod
 - [x] รวมโค้ดตั้ง cookie เป็นฟังก์ชันเดียว ใช้ทั้ง login / logout / ลบบัญชี + เพิ่ม `COOKIE_DOMAIN` (`internal/middleware/cookie.go`)
   - ⚠ ต้องตั้ง `COOKIE_DOMAIN=.<domain>` บน prod ไม่งั้น Next มองไม่เห็น cookie; ยังไม่ได้ทดสอบบน domain จริง
-- [ ] rate limit เห็น IP จริง: ตอนนี้ `SetTrustedProxies(nil)` → ตั้ง `TrustedPlatform` ตาม docs ของ host
+- [ ] rate limit เห็น IP จริง: ตอนนี้ `SetTrustedProxies(nil)` → ตั้ง `TrustedPlatform` ตาม docs ของ Railway
 - [ ] deploy + `make migrate` กับ prod (ขออนุมัติก่อน, ห้าม `make seed`)
 - [ ] สร้าง bucket R2 prod + custom domain + ตั้ง env `R2_*` (bucket dev ใช้ r2.dev ทำแล้ว)
 - [x] `POST /users/me/profile-image` (multipart ช่อง `profileImage`, ≤ 2 MB, jpeg/png/webp ตรวจจากเนื้อไฟล์) เก็บที่ R2 key `profile-images/<userId>` เขียนทับรูปเดิม, ลบบัญชีแล้วลบรูปด้วย
@@ -174,3 +176,7 @@ feed = lift ที่ verified เรียงใหม่สุดก่อน 
 6. Feed
 
 **ห้ามตัด:** Phase 1, Phase 2, README + บัญชี demo
+
+ต้องแก้ที่ Go (จดไว้ใน PLAN.md หัวข้อ "ต้องแก้ที่ Go" แล้ว)
+GET /lifts/:id ควรส่ง lift ที่ยังไม่ verified ให้เฉพาะเจ้าของและ admin คนอื่นควรได้ 404
+GET /lifts/users/:id ควรส่งให้คนอื่นเฉพาะ lift ที่ verified
