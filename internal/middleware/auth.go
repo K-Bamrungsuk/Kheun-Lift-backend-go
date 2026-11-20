@@ -39,7 +39,7 @@ func RequireSession(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 		if err != nil {
-			log.Print("Find session failed")
+			log.Printf("Find session: %v", err)
 			fail(http.StatusInternalServerError, "Unable to check session.")
 			return
 		}
