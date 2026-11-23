@@ -11,7 +11,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -24,15 +23,11 @@ func NewDeleteMeHandler(pool *pgxpool.Pool, cookie middleware.SessionCookie, sto
 		}
 
 		if err := service.DeleteUser(c.Request.Context(), pool, session.User.ID); err != nil {
-			var pgErr *pgconn.PgError
 			switch {
-			case errors.As(err, &pgErr) && pgErr.Code == "23503" &&
-				pgErr.ConstraintName == "LiftRecord_userId_fkey":
-				c.JSON(http.StatusConflict, gin.H{"message": "Delete your lift records before deleting your account."})
 			case errors.Is(err, pgx.ErrNoRows):
 				c.JSON(http.StatusUnauthorized, gin.H{"message": "Session is invalid. Please login."})
 			default:
-				log.Print("Delete user failed")
+				log.Printf("Delete user failed: %v", err)
 				c.JSON(http.StatusInternalServerError, gin.H{"message": "Unable to delete account."})
 			}
 			return

@@ -42,7 +42,7 @@ app.<domain> (Next, Vercel) ──► api.<domain> (Go, Railway) ──► Neon 
 ## สถานะ (2026-11-15)
 
 - ✅ register / login / logout / session, users (me, แก้, ลบ), exercises, lifts CRUD, leaderboards, weight-classes, CORS + trusted origin (ทดสอบจาก `localhost:3002` แล้ว), seed แยกใน `make seed`
-- ❓ โฟลเดอร์ว่าง `internal/email`, `mailjob`, `verification` และ migration 00004 ที่จองไว้: ยังไม่ได้ตัดสินใจว่าใช้ทำอะไร
+- ❓ โฟลเดอร์ว่าง `internal/email`, `mailjob`, `verification`: ยังไม่ได้ตัดสินใจว่าใช้ทำอะไร
 
 ---
 
@@ -78,6 +78,20 @@ app.<domain> (Next, Vercel) ──► api.<domain> (Go, Railway) ──► Neon 
   - ทำใน service + transaction (Phase 7 จะเพิ่ม notification ตรงนี้)
 
 **เสร็จเมื่อ:** verify แล้ว lift ขึ้น leaderboard, reject แล้วเจ้าของเห็นเหตุผลใน `/lifts/me`
+
+## Phase 2.5 — ฤดูกาล leaderboard (รายปี)
+
+ฤดูกาลแรกคือ 2027 (lift ที่ส่งก่อนปี 2027 นับรวมในฤดูกาล 2027)
+
+- [ ] leaderboard รับ `?season=YYYY` (ไม่ส่ง = ปีปัจจุบัน) กรองตาม `createdAt` ไม่ต้องทำ migration หรือ cron
+  - lift อยู่ฤดูกาลไหนให้ดูจาก `createdAt` (ตอนส่ง) ไม่ใช่ตอน verify ถ้า admin ตรวจช้า ผู้ใช้ต้องไม่เสียสิทธิ์
+  - ไม่มีช่องให้กรอก "วันที่ยกจริง" (กรอกย้อนหลังโกงได้)
+- ช่วงผ่อนผัน: รับ lift ถึง 31 ธ.ค., admin ตรวจที่ค้างให้เสร็จภายใน 15 ม.ค. ระหว่างนี้หน้าเว็บแสดงว่า "รอผลสุดท้าย"
+- [ ] ก่อนปิดฤดูกาลแรก (ม.ค. 2028): migration `SeasonStanding` (season, exerciseId, weightClassId, userId, rank, liftId) แล้ว `INSERT … SELECT` จาก query leaderboard ปีละครั้ง (admin รันเอง ไม่ใช้ cron)
+  - หน้าฤดูกาลเก่าและ badge Podium / Champion อ่านจากตารางนี้ ผลจะไม่เปลี่ยนถ้ามีคนลบ lift ทีหลัง
+  - ⚠ ต้องตัดสินใจตอนออกแบบ: FK ไปที่ `User` ถ้าเป็น RESTRICT คนที่เคยติดอันดับจะลบบัญชีไม่ได้
+- badge Podium / Champion นับทุกฤดูกาล (ได้แล้วไม่หาย)
+- ไม่ส่งเมลแจ้ง noti และไม่แจ้งตอนเริ่มฤดูกาลใหม่ (หน้าเว็บแสดงแถบเองจากวันที่) เมลใช้เฉพาะ forgot password
 
 ## Phase 3 — AI ช่วยตรวจ lift
 
@@ -121,7 +135,7 @@ feed = lift ที่ verified เรียงใหม่สุดก่อน 
 - [ ] `GET /feed?cursor=` มี likeCount, commentCount, likedByMe ใน query เดียว (ห้าม N+1)
 - [ ] `PUT` / `DELETE /lifts/:id/like` กดซ้ำไม่ error, ตอบ likeCount ล่าสุด
 - [ ] `GET` / `POST /lifts/:id/comments`, `DELETE /comments/:id` (เจ้าของหรือ admin)
-- [ ] ตัดสินใจ: ลบบัญชีแล้วลบ lift ตามไปด้วยไหม (ตอนนี้ลบไม่ได้ถ้ายังมี lift)
+- [x] ตัดสินใจ: ลบบัญชีแล้วลบ lift ตามไปด้วยไหม → ลบด้วย, FK `LiftRecord_userId_fkey` เป็น `ON DELETE CASCADE` (migration 00007)
 
 **เสร็จเมื่อ:** ไถ feed, like, comment, ลบ comment ตัวเองได้
 
