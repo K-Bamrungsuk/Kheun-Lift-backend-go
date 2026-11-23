@@ -27,7 +27,7 @@ func NewLogoutHandler(
 		if err := service.Logout(
 			c.Request.Context(), pool, session.TokenHash,
 		); err != nil {
-			log.Print("Delete session failed")
+			log.Printf("Delete session failed: %v", err)
 			c.JSON(http.StatusInternalServerError, map[string]string{
 				"message": "Unable to logout.",
 			})

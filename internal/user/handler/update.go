@@ -139,7 +139,7 @@ func NewPatchMeHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 					"message": "Session is invalid. Please login.",
 				})
 			default:
-				log.Print("Update user failed")
+				log.Printf("Update user failed: %v", err)
 				c.JSON(http.StatusInternalServerError, map[string]string{
 					"message": "Unable to update user.",
 				})

@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"log"
 	"time"
 
 	"kheun-Lift-backend-go/internal/auth/model"
@@ -43,7 +42,6 @@ func Login(
 	missingUser := errors.Is(err, pgx.ErrNoRows)
 
 	if err != nil && !missingUser {
-		log.Print("Find login user failed")
 		return model.LoginResult{}, err
 	}
 
@@ -55,7 +53,6 @@ func Login(
 
 	matches, err := verifyPassword(input.Password, passwordHash)
 	if err != nil {
-		log.Print("Verify password hash failed")
 		return model.LoginResult{}, err
 	}
 	if !matches || missingUser {
@@ -72,7 +69,6 @@ func Login(
 	if err := repository.CreateSession(
 		ctx, pool, tokenHash, user.ID, expiresAt,
 	); err != nil {
-		log.Print("Create session failed")
 		return model.LoginResult{}, err
 	}
 

@@ -67,7 +67,7 @@ func NewUploadProfileImageHandler(pool *pgxpool.Pool, store *repository.ProfileI
 			return
 		}
 		if err != nil {
-			log.Print("Save profile image failed")
+			log.Printf("Save profile image failed: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Unable to update user."})
 			return
 		}
@@ -101,7 +101,7 @@ func NewDeleteProfileImageHandler(pool *pgxpool.Pool, store *repository.ProfileI
 			return
 		}
 		if err != nil {
-			log.Print("Clear profile image failed")
+			log.Printf("Clear profile image failed: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Unable to delete profile image."})
 			return
 		}

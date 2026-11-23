@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 
@@ -52,6 +53,7 @@ func NewLoginHandler(pool *pgxpool.Pool, cookie middleware.SessionCookie) gin.Ha
 		}
 
 		if err != nil {
+			log.Printf("Login failed: %v", err)
 			fail(http.StatusInternalServerError, "Unable to login.")
 			return
 		}

@@ -78,7 +78,7 @@ func NewRegisterHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 				return
 			}
 
-			log.Print("Create user failed")
+			log.Printf("Create user failed: %v", err)
 			c.JSON(http.StatusInternalServerError, map[string]string{
 				"message": "Unable to register.",
 			})
