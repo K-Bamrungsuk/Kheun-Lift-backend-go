@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	"kheun-Lift-backend-go/internal/middleware"
 	"kheun-Lift-backend-go/internal/user/repository"
@@ -35,7 +37,9 @@ func NewDeleteMeHandler(pool *pgxpool.Pool, cookie middleware.SessionCookie, sto
 
 		// The account is already gone, so a failed image delete is only logged.
 		if session.User.ProfileImage != nil {
-			if err := store.Delete(c.Request.Context(), session.User.ID); err != nil {
+			ctx, cancel := context.WithTimeout(context.WithoutCancel(c.Request.Context()), 15*time.Second)
+			defer cancel()
+			if err := store.Delete(ctx, session.User.ID); err != nil {
 				log.Printf("Delete profile image failed: %v", err)
 			}
 		}
